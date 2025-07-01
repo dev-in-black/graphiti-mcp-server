@@ -15,7 +15,7 @@ jobs:
       - name: Login to Docker Registry
         uses: docker/login-action@v3
         with:
-          registry: http://registry.registry:5000
+          registry: ghcr.io
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
@@ -24,5 +24,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: http://registry.registry:5000/graphiti-mcp:1.0.0
+          tags: ghcr.io/DevBlackSuit/graphiti-mcp:1.0.0
           file: ./Dockerfile
