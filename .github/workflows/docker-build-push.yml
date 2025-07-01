@@ -27,5 +27,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/DevBlackSuit/graphiti-mcp:1.0.0
+          tags: ghcr.io/dev-in-black/graphiti-mcp:1.0.${{ github.run_number }}
           file: ./Dockerfile
