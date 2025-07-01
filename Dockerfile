@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv using the installer script
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
+COPY uv-installer.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
 # Add uv to PATH
