@@ -51,7 +51,10 @@ cd graphiti && pwd
 
 1. Ensure you have Python 3.10 or higher installed.
 2. A running Neo4j database (version 5.26 or later required)
-3. OpenAI API key for LLM operations
+3. API key for LLM operations:
+   - OpenAI API key (default)
+   - Google API key (for Gemini models)
+   - Azure OpenAI credentials
 
 ### Setup
 
@@ -70,22 +73,38 @@ uv sync
 
 The server uses the following environment variables:
 
+### Database Configuration
 - `NEO4J_URI`: URI for the Neo4j database (default: `bolt://localhost:7687`)
 - `NEO4J_USER`: Neo4j username (default: `neo4j`)
 - `NEO4J_PASSWORD`: Neo4j password (default: `demodemo`)
+
+### LLM Provider Configuration
+
+#### OpenAI (Default)
 - `OPENAI_API_KEY`: OpenAI API key (required for LLM operations)
 - `OPENAI_BASE_URL`: Optional base URL for OpenAI API
-- `MODEL_NAME`: OpenAI model name to use for LLM operations.
-- `SMALL_MODEL_NAME`: OpenAI model name to use for smaller LLM operations.
-- `LLM_TEMPERATURE`: Temperature for LLM responses (0.0-2.0).
-- `AZURE_OPENAI_ENDPOINT`: Optional Azure OpenAI LLM endpoint URL
-- `AZURE_OPENAI_DEPLOYMENT_NAME`: Optional Azure OpenAI LLM deployment name
-- `AZURE_OPENAI_API_VERSION`: Optional Azure OpenAI LLM API version
-- `AZURE_OPENAI_EMBEDDING_API_KEY`: Optional Azure OpenAI Embedding deployment key (if other than `OPENAI_API_KEY`)
-- `AZURE_OPENAI_EMBEDDING_ENDPOINT`: Optional Azure OpenAI Embedding endpoint URL
-- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME`: Optional Azure OpenAI embedding deployment name
-- `AZURE_OPENAI_EMBEDDING_API_VERSION`: Optional Azure OpenAI API version
-- `AZURE_OPENAI_USE_MANAGED_IDENTITY`: Optional use Azure Managed Identities for authentication
+- `MODEL_NAME`: Model name to use for LLM operations (default: `gpt-4.1-mini`)
+- `SMALL_MODEL_NAME`: Model name to use for smaller LLM operations (default: `gpt-4.1-nano`)
+- `EMBEDDER_MODEL_NAME`: Model name for embeddings (default: `text-embedding-3-small`)
+
+#### Google Gemini
+- `GOOGLE_API_KEY`: Google API key (required when using Gemini)
+- `USE_GOOGLE_GEMINI`: Set to `true` to use Google Gemini instead of OpenAI
+- `MODEL_NAME`: Gemini model name (default: `gemini-2.0-flash` when using Gemini)
+- `EMBEDDER_MODEL_NAME`: Gemini embedding model (default: `embedding-001` when using Gemini)
+
+#### Azure OpenAI
+- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI LLM endpoint URL
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Azure OpenAI LLM deployment name
+- `AZURE_OPENAI_API_VERSION`: Azure OpenAI LLM API version
+- `AZURE_OPENAI_EMBEDDING_API_KEY`: Azure OpenAI Embedding deployment key (if other than `OPENAI_API_KEY`)
+- `AZURE_OPENAI_EMBEDDING_ENDPOINT`: Azure OpenAI Embedding endpoint URL
+- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME`: Azure OpenAI embedding deployment name
+- `AZURE_OPENAI_EMBEDDING_API_VERSION`: Azure OpenAI API version
+- `AZURE_OPENAI_USE_MANAGED_IDENTITY`: Use Azure Managed Identities for authentication
+
+### General Configuration
+- `LLM_TEMPERATURE`: Temperature for LLM responses (0.0-2.0, default: 0.0)
 - `SEMAPHORE_LIMIT`: Episode processing concurrency. See [Concurrency and LLM Provider 429 Rate Limit Errors](#concurrency-and-llm-provider-429-rate-limit-errors)
 
 You can set these variables in a `.env` file in the project directory.
@@ -113,6 +132,7 @@ Available arguments:
 - `--group-id`: Set a namespace for the graph (optional). If not provided, defaults to "default".
 - `--destroy-graph`: If set, destroys all Graphiti graphs on startup.
 - `--use-custom-entities`: Enable entity extraction using the predefined ENTITY_TYPES
+- `--use-google-gemini`: Use Google Gemini for LLM and embeddings instead of OpenAI
 
 ### Concurrency and LLM Provider 429 Rate Limit Errors
 
@@ -266,6 +286,68 @@ source_description="CRM data"
 
 ```
 
+## Using Google Gemini
+
+The Graphiti MCP server supports Google Gemini models for both LLM operations and embeddings. To use Google Gemini:
+
+### Environment Configuration
+
+Set the following environment variables:
+
+```bash
+# Required
+GOOGLE_API_KEY=your_google_api_key_here
+USE_GOOGLE_GEMINI=true
+
+# Optional - these are the defaults when using Gemini
+MODEL_NAME=gemini-2.0-flash
+EMBEDDER_MODEL_NAME=embedding-001
+```
+
+### Command Line Usage
+
+```bash
+# Using environment variables
+uv run graphiti_mcp_server.py --use-google-gemini --group-id my-group
+
+# Or with explicit model specification
+uv run graphiti_mcp_server.py --use-google-gemini --model gemini-2.0-flash --group-id my-group
+```
+
+### MCP Client Configuration
+
+Example configuration for Claude Desktop or other MCP clients:
+
+```json
+{
+  "mcpServers": {
+    "graphiti-memory": {
+      "transport": "stdio",
+      "command": "/Users/<user>/.local/bin/uv",
+      "args": [
+        "run",
+        "--isolated",
+        "--directory",
+        "/path/to/graphiti/mcp_server",
+        "--project",
+        ".",
+        "graphiti_mcp_server.py",
+        "--transport",
+        "stdio",
+        "--use-google-gemini"
+      ],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "password",
+        "GOOGLE_API_KEY": "your_google_api_key_here",
+        "USE_GOOGLE_GEMINI": "true"
+      }
+    }
+  }
+}
+```
+
 ## Integrating with the Cursor IDE
 
 To integrate the Graphiti MCP Server with the Cursor IDE, follow these steps:
@@ -346,7 +428,10 @@ The Graphiti MCP Server container uses the SSE MCP transport. Claude Desktop doe
 
 - Python 3.10 or higher
 - Neo4j database (version 5.26 or later required)
-- OpenAI API key (for LLM operations and embeddings)
+- LLM Provider API key:
+  - OpenAI API key (default option)
+  - Google API key (for Gemini models)
+  - Azure OpenAI credentials
 - MCP-compatible client
 
 ## Telemetry
